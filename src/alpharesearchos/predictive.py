@@ -140,11 +140,24 @@ def strategy_scores(
 ) -> tuple[pd.DataFrame, dict[str, Any]]:
     """Return causal daily scores and an explicit, JSON-safe training audit.
 
-    ``fit_cutoff`` is an exclusive row index. Values beyond the current prefix
-    length are permitted, so the same frozen protocol can be prefix-audited.
-    Training starts with >=32 valid dates and >=64 pooled samples, expands to
-    train_window dates, and subsequently rolls. No missing feature or label is
-    filled. Rank ensembles require every constituent for each scored asset.
+    ``fit_cutoff`` is an exclusive row index controlling whether the model
+    is frozen after the last scheduled fit.
+
+    * None (default): fit rolls all the way to the panel end, retraining
+      on every scheduled refit window including rows at ``length - 1``.
+    * int >= 0: the last scheduled fit row is capped at ``min(length - 1,
+      fit_cutoff - 1)`` and the training audit records
+      ``training_frozen = True``. Subsequent prediction rows remain but are
+      produced with the frozen model; labels crossing ``fit_cutoff`` are
+      rejected by an internal assertion.
+
+    Values beyond the current prefix length are permitted, so the same
+    frozen protocol can be prefix-audited.
+
+    Training starts with >=32 valid dates and >=64 pooled samples, expands
+    to train_window dates, and subsequently rolls. No missing feature or
+    label is filled. Rank ensembles require every constituent for each
+    scored asset.
 
     Predictions before enough historical labels have matured remain NaN.
     A scheduled fit with too few samples leaves that prediction block NaN;
