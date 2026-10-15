@@ -30,6 +30,11 @@ class BacktestConfig:
     signal_lag: int = 2
     annualization: int = 252
 
+    def __str__(self) -> str:
+        return (f"BacktestConfig(cost_bps={self.cost_bps}, top_k={self.top_k}, "
+                f"rebalance_every={self.rebalance_every}, signal_lag={self.signal_lag}, "
+                f"annualization={self.annualization})")
+
     def __post_init__(self) -> None:
         if not math.isfinite(self.cost_bps) or not 0 <= self.cost_bps <= 1000:
             raise ValueError("cost_bps must be finite and between 0 and 1000.")
