@@ -290,10 +290,18 @@ def make_server(runs_root: Path, dataset_root: Path, port=8765):
             self.send_bytes(json.dumps(clean(payload), ensure_ascii=False, allow_nan=False).encode(), status=status)
 
         def trusted(self):
-            allowed = {f"127.0.0.1:{self.server.server_port}", f"localhost:{self.server.server_port}"}
-            return self.headers.get("Host", "") in allowed and (
-                not self.headers.get("Origin") or self.headers["Origin"] in {f"http://{host}" for host in allowed}
-            )
+            port = self.server.server_port
+            allowed = {f"127.0.0.1:{port}", f"localhost:{port}"}
+            # Also accept Host headers without explicit port (browser default)
+            host = self.headers.get("Host", "")
+            if host in {"127.0.0.1", "localhost"}:
+                host = f"{host}:{port}"
+            origin = self.headers.get("Origin")
+            if origin is None or origin == "null":
+                origin_ok = True
+            else:
+                origin_ok = origin in {f"http://{h}" for h in allowed}
+            return host in allowed and origin_ok
 
         def do_GET(self):
             if not self.trusted():
