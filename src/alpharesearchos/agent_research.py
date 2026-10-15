@@ -62,9 +62,9 @@ def development_scores(strategy, dev, folds, signal_lag=2):
     audits = []
     for start, end in folds:
         # No validation label may train its own fold's estimator.
-        cutoff = start - signal_lag
+        cutoff = max(0, start - signal_lag)
         predicted, audit = strategy_scores(strategy, dev, fit_cutoff=cutoff)
-        scores.iloc[start - signal_lag:end - signal_lag] = predicted.iloc[start - signal_lag:end - signal_lag]
+        scores.iloc[max(0, start - signal_lag):max(0, end - signal_lag)] = predicted.iloc[max(0, start - signal_lag):max(0, end - signal_lag)]
         audits.append({"fold_start": start, "fold_end": end, "fit_cutoff": cutoff, **audit})
     return scores, {"policy": "fit_frozen_before_each_development_fold", "folds": audits,
                     "model": strategy["model"], "model_params": strategy["model_params"]}
