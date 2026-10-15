@@ -172,8 +172,11 @@ def summarize(curve: pd.DataFrame, annualization: int = 252) -> dict[str, Any]:
         raise ValueError("Cannot summarize an empty curve.")
     returns = curve["return"].to_numpy(dtype=float)
     benchmark_returns = curve["benchmark_return"].to_numpy(dtype=float)
-    if not np.isfinite(returns).all() or not np.isfinite(benchmark_returns).all() or (returns <= -1).any() or (benchmark_returns <= -1).any():
-        raise ValueError("Curve returns must be finite and greater than -1.")
+    if not np.isfinite(returns).all() or not np.isfinite(benchmark_returns).all():
+        raise ValueError("Curve returns must be finite.")
+    if (returns <= -1).any() or (benchmark_returns <= -1).any():
+        bad = max(float(np.min(returns)), float(np.min(benchmark_returns)))
+        raise ValueError(f"Curve returns must be greater than -1; observed minimum {bad:.4f}")
     log_growth = float(np.log1p(returns).sum())
     equity = np.exp(np.cumsum(np.log1p(returns)))
     total_return = float(np.expm1(log_growth))
